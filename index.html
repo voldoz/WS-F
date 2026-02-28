@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WS Fitness</title>
+  <style>
+    :root{
+      --bg1:#0f172a; --bg2:#111827; --card:#1e293b; --ink:#e5e7eb;
+      --muted:#94a3b8; --blue:#38bdf8; --blue2:#2563eb; --red:#fecaca; --green:#bbf7d0;
+      --line:#334155;
+    }
+    body{
+      margin:0; padding:18px; color:var(--ink);
+      font-family: Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 20% 10%, #0b3b6a22, transparent 60%),
+                  radial-gradient(1200px 800px at 90% 30%, #2563eb22, transparent 55%),
+                  linear-gradient(135deg,var(--bg1),var(--bg2));
+    }
+    h1{margin:0 0 14px; text-align:center; color:var(--blue); letter-spacing:.4px}
+    .wrap{max-width:720px;margin:0 auto}
+    .card{
+      background: rgba(30,41,59,.85);
+      border:1px solid rgba(51,65,85,.7);
+      border-radius:16px;
+      padding:14px;
+      box-shadow: 0 14px 40px rgba(0,0,0,.25);
+      backdrop-filter: blur(8px);
+      margin-bottom:12px;
+    }
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .col{flex:1; min-width:220px}
+    label{display:block; margin:10px 0 6px; font-weight:800}
+    input,select{
+      width:100%;
+      box-sizing:border-box;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid rgba(51,65,85,.9);
+      background:#0b1220;
+      color:var(--ink);
+      outline:none;
+      font-size:15px;
+    }
+    input::placeholder{color:#64748b}
+    button{
+      width:100%;
+      padding:13px 14px;
+      border-radius:14px;
+      border:0;
+      background: linear-gradient(90deg,var(--blue),var(--blue2));
+      color:white;
+      font-weight:900;
+      font-size:16px;
+      cursor:pointer;
+      margin-top:10px;
+    }
+    button.secondary{
+      background:#0b1220;
+      border:1px solid rgba(51,65,85,.9);
+      color:var(--ink);
+    }
+    .pill{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px; flex-wrap:wrap;
+      background:#0b1220; border:1px solid rgba(51,65,85,.9);
+      border-radius:14px; padding:10px 12px;
+    }
+    .pill b{color:var(--blue)}
+    .badge{display:inline-flex; align-items:center; gap:8px; padding:7px 10px; border-radius:999px;
+      background:#0b1220; border:1px solid rgba(51,65,85,.9); color:var(--muted); font-weight:900; font-size:12px}
+    .msg{margin-top:10px; padding:10px 12px; border-radius:12px; border:1px solid rgba(51,65,85,.9); background:#0b1220}
+    .msg.ok{color:var(--green)}
+    .msg.err{color:var(--red)}
+    .muted{color:var(--muted); font-size:13px; line-height:1.6}
+    .tabs{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+    .tab{
+      flex:1; min-width:170px;
+      border:1px solid rgba(51,65,85,.9);
+      background:#0b1220;
+      color:var(--ink);
+      border-radius:12px;
+      padding:12px;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .tab.active{background:linear-gradient(90deg,var(--blue),var(--blue2)); border:0}
+    .hidden{display:none !important}
+    .hr{height:1px;background:rgba(51,65,85,.9);margin:12px 0;border-radius:999px}
+    .k{color:var(--muted)}
+    code{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <h1>WS Fitness</h1>
+
+  <!-- STATUS -->
+  <div class="card">
+    <div class="pill">
+      <div>
+        Session: <b id="sessEmail">—</b>
+        <span class="badge" id="sessRole">ROLE: —</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span class="badge" id="conn">Firebase: —</span>
+        <button class="secondary" style="width:auto;margin:0;padding:10px 12px" id="logoutBtn" onclick="logout()" disabled>Logout</button>
+      </div>
+    </div>
+    <div class="muted" style="margin-top:10px">
+      • Login/Create works on GitHub Pages after 2 Firebase console settings (Authorized domain + Firestore rules).<br>
+      • Data is saved in <code>users/{uid}</code> so it syncs across devices.
+    </div>
+  </div>
+
+  <!-- AUTH -->
+  <div class="card" id="authCard">
+    <div class="tabs">
+      <button class="tab active" id="tabLogin" onclick="setMode('login')">Login</button>
+      <button class="tab" id="tabUser" onclick="setMode('user')">Create User</button>
+      <button class="tab" id="tabCoach" onclick="setMode('coach')">Create Coach</button>
+    </div>
+
+    <div id="panelLogin">
+      <div class="row">
+        <div class="col">
+          <label>Email</label>
+          <input id="loginEmail" placeholder="email@example.com" inputmode="email" autocomplete="email">
+        </div>
+        <div class="col">
+          <label>Password</label>
+          <input id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+      </div>
+      <button onclick="login()">Login</button>
+    </div>
+
+    <div id="panelUser" class="hidden">
+      <div class="row">
+        <div class="col">
+          <label>Name</label>
+          <input id="userName" placeholder="name">
+        </div>
+        <div class="col">
+          <label>Email</label>
+          <input id="userEmail" placeholder="email@example.com" inputmode="email" autocomplete="email">
+        </div>
+        <div class="col">
+          <label>Password</label>
+          <input id="userPass" type="password" placeholder="min 6 characters" autocomplete="new-password">
+        </div>
+      </div>
+      <button onclick="createAccount('user')">Create User</button>
+    </div>
+
+    <div id="panelCoach" class="hidden">
+      <div class="row">
+        <div class="col">
+          <label>Name</label>
+          <input id="coachName" placeholder="coach name">
+        </div>
+        <div class="col">
+          <label>Email</label>
+          <input id="coachEmail" placeholder="email@example.com" inputmode="email" autocomplete="email">
+        </div>
+        <div class="col">
+          <label>Password</label>
+          <input id="coachPass" type="password" placeholder="min 6 characters" autocomplete="new-password">
+        </div>
+      </div>
+      <button onclick="createAccount('coach')">Create Coach</button>
+    </div>
+
+    <div id="msg" class="msg hidden"></div>
+  </div>
+
+  <!-- APP -->
+  <div class="card hidden" id="appCard">
+    <div style="font-weight:900;color:var(--blue);font-size:18px">App is connected ✅</div>
+    <div class="muted" style="margin-top:8px">
+      This is the working Firebase base. Next we can merge your full WS Fitness pages (calculator/workouts/daily burn/weight) and save them to Firestore.
+    </div>
+    <div class="hr"></div>
+    <div class="muted">
+      Firestore path used now: <code>users/{uid}</code><br>
+      You can open the app on another phone and login with same email to see same data.
+    </div>
+  </div>
+
+  <!-- QUICK FIX CHECKLIST -->
+  <div class="card">
+    <div style="font-weight:900;color:var(--blue);font-size:16px">If it doesn’t work: do these 2 settings</div>
+    <div class="hr"></div>
+    <div class="muted">
+      <b>1) Authorized domain</b><br>
+      Firebase Console → Authentication → Settings → Authorized domains → Add: <code>&lt;yourname&gt;.github.io</code><br><br>
+      <b>2) Firestore rules (temporary for testing)</b><br>
+      Firestore → Rules → publish this (only for testing):
+      <div class="msg" style="margin-top:10px">
+        <div class="k">rules_version = '2';</div>
+        <div class="k">service cloud.firestore {</div>
+        <div class="k">&nbsp; match /databases/{database}/documents {</div>
+        <div class="k">&nbsp;&nbsp; match /{document=**} {</div>
+        <div class="k">&nbsp;&nbsp;&nbsp; allow read, write: if request.auth != null;</div>
+        <div class="k">&nbsp;&nbsp; }</div>
+        <div class="k">&nbsp; }</div>
+        <div class="k">}</div>
+      </div>
+      بعد ما تتأكد أنه اشتغل، نرجع نركّب Rules صلاحيات (admin/coach/subscriber/user) بشكل آمن.
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import {
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAK06AL_e24OQuoWvNmp9I6Xkc2Yx9ZoBc",
+    authDomain: "ws-fitness.firebaseapp.com",
+    projectId: "ws-fitness",
+    storageBucket: "ws-fitness.firebasestorage.app",
+    messagingSenderId: "639434705944",
+    appId: "1:639434705944:web:4f0eef88b76e4d856c076d",
+    measurementId: "G-BZG7GS5ZDW"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const el = (id)=>document.getElementById(id);
+  const msgBox = el("msg");
+
+  function showMsg(text, ok=false){
+    msgBox.classList.remove("hidden","ok","err");
+    msgBox.classList.add(ok ? "ok" : "err");
+    msgBox.textContent = text;
+  }
+  function clearMsg(){ msgBox.classList.add("hidden"); msgBox.textContent=""; }
+
+  window.setMode = (mode)=>{
+    clearMsg();
+    el("tabLogin").classList.toggle("active", mode==="login");
+    el("tabUser").classList.toggle("active", mode==="user");
+    el("tabCoach").classList.toggle("active", mode==="coach");
+    el("panelLogin").classList.toggle("hidden", mode!=="login");
+    el("panelUser").classList.toggle("hidden", mode!=="user");
+    el("panelCoach").classList.toggle("hidden", mode!=="coach");
+  };
+
+  // Login
+  window.login = async ()=>{
+    clearMsg();
+    const email = (el("loginEmail").value||"").trim();
+    const pass  = (el("loginPass").value||"").trim();
+    if(!email || !pass) return showMsg("Enter email + password.");
+    try{
+      await signInWithEmailAndPassword(auth, email, pass);
+      showMsg("Logged in ✅", true);
+    }catch(e){
+      showMsg(`Login error: ${e.code || ""} ${e.message || e}`);
+    }
+  };
+
+  // Create user/coach
+  window.createAccount = async (role)=>{
+    clearMsg();
+    const nameEl = role==="coach" ? el("coachName") : el("userName");
+    const emailEl= role==="coach" ? el("coachEmail") : el("userEmail");
+    const passEl = role==="coach" ? el("coachPass") : el("userPass");
+
+    const name = (nameEl.value||"").trim();
+    const email= (emailEl.value||"").trim();
+    const pass = (passEl.value||"").trim();
+
+    if(!name || !email || !pass) return showMsg("Enter name + email + password.");
+    if(pass.length < 6) return showMsg("Password must be at least 6 characters.");
+
+    try{
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      const uid = cred.user.uid;
+
+      // Create user profile doc
+      await setDoc(doc(db, "users", uid), {
+        name,
+        role,              // "user" or "coach"
+        active: true,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge:true });
+
+      showMsg(`Account created as ${role.toUpperCase()} ✅`, true);
+    }catch(e){
+      showMsg(`Create error: ${e.code || ""} ${e.message || e}`);
+    }
+  };
+
+  window.logout = async ()=>{
+    clearMsg();
+    await signOut(auth);
+  };
+
+  onAuthStateChanged(auth, async (user)=>{
+    if(user){
+      el("conn").textContent = "Firebase: CONNECTED";
+      el("logoutBtn").disabled = false;
+      el("sessEmail").textContent = user.email || "—";
+
+      // read role (if Firestore rules block, you'll see error message)
+      try{
+        const snap = await getDoc(doc(db, "users", user.uid));
+        const data = snap.exists() ? snap.data() : null;
+        el("sessRole").textContent = "ROLE: " + (data?.role || "unknown");
+      }catch(e){
+        el("sessRole").textContent = "ROLE: —";
+        showMsg(`Firestore read blocked: ${e.code || ""} ${e.message || e}`);
+      }
+
+      el("authCard").classList.add("hidden");
+      el("appCard").classList.remove("hidden");
+    } else {
+      el("conn").textContent = "Firebase: —";
+      el("logoutBtn").disabled = true;
+      el("sessEmail").textContent = "—";
+      el("sessRole").textContent = "ROLE: —";
+      el("authCard").classList.remove("hidden");
+      el("appCard").classList.add("hidden");
+    }
+  });
+</script>
+</body>
+</html>
